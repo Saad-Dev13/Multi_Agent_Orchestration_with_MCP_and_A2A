@@ -40,7 +40,7 @@ class WebsiteBuilderSimple:
 
             model="gemini-3.5-flash",
 
-            instructions=self.system_instruction,
+            instruction=self.system_instruction,
             description=self.description,
         )
     
@@ -72,7 +72,7 @@ class WebsiteBuilderSimple:
 
         user_content = types.Content(
             role="user",
-            parts=[types.Part.from_text(query)]
+            parts=[types.Part.from_text(text=query)]
         )
 
         async for event in self._runner.run_async(

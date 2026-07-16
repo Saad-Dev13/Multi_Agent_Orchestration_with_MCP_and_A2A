@@ -88,3 +88,20 @@ Use this file to record every fix made in the project.
 	Why it was needed: The current A2A SDK exposes route helpers mounted on FastAPI instead of the old app wrapper.
 	How it was fixed: Replaced the old wrapper with `FastAPI()` plus `add_a2a_routes_to_fastapi(...)`.
 	Result: The agent module now starts correctly with the current SDK and exposes CLI help under `uv run python -m agents.website_builder_simple`.
+- Date: 2026-07-16
+	File: [agents/website_builder_simple/__main__.py](agents/website_builder_simple/__main__.py), [agents/website_builder_simple/agent.py](agents/website_builder_simple/agent.py)
+	Lines: multiple
+	Problem: Running the agent module failed due to multiple API changes in the newer version of the `a2a-sdk` and `google-adk` libraries. First, `ValueError: Protocol message AgentCard has no "url" field.` (and camelCase fields for modes failed). Second, `pydantic_core._pydantic_core.ValidationError: 1 validation error for LlmAgent instructions Extra inputs are not permitted`. Third, `TypeError: DefaultRequestHandlerV2.__init__() missing 1 required positional argument: 'agent_card'`.
+	Why it was needed: The agent codebase was outdated compared to the active versions of both SDKs, preventing the FastAPI server from instantiating or starting.
+	How it was fixed:
+		1. Imported `AgentInterface` and updated the `AgentCard` instantiation to declare the URL under `supported_interfaces` (using `JSONRPC` protocol binding). Also updated `defaultInputModes` and `defaultOutputModes` constructor arguments to their snake_case equivalents (`default_input_modes` and `default_output_modes`).
+		2. Updated `LlmAgent` construction in `agent.py` to use `instruction=self.system_instruction` instead of `instructions=`.
+		3. Added `agent_card=agent_card` parameter to `DefaultRequestHandler` call in `__main__.py`.
+	Result: The agent server starts successfully on `http://localhost:10000` with the updated A2A and ADK library APIs.
+- Date: 2026-07-16
+	File: [agents/website_builder_simple/agent.py](agents/website_builder_simple/agent.py)
+	Lines: 75
+	Problem: The google-genai SDK's `types.Part.from_text` method requires the `text` argument to be passed by keyword name (keyword-only parameter), but it was passed positionally, causing `Expected argument text to be passed by name`.
+	Why it was needed: Running the agent to process queries failed immediately with a TypeError/ValueError due to the positional argument call pattern.
+	How it was fixed: Modified the invocation at line 75 to pass `text=query` instead of `query`.
+	Result: The agent correctly runs queries and uses the Google GenAI SDK to generate content.

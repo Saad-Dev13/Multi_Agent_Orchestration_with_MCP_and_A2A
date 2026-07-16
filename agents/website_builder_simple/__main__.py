@@ -2,7 +2,7 @@ import uvicorn
 # Changed from the old `A2AStarletteApplication` import because this SDK version exposes route mounting through FastAPI instead.
 from fastapi import FastAPI
 
-from a2a.types import AgentSkill, AgentCard, AgentCapabilities
+from a2a.types import AgentSkill, AgentCard, AgentCapabilities, AgentInterface
 import click
 from a2a.server.request_handlers import DefaultRequestHandler
 
@@ -39,17 +39,23 @@ def main(host: str, port: int):
     agent_card = AgentCard(
         name ="website_builder_simple",
         description="A simple website builder agent that can create basic web pages and is built using google's agent development framework.",
-        url=f"http://{host}:{port}/",
+        supported_interfaces=[
+            AgentInterface(
+                url=f"http://{host}:{port}/",
+                protocol_binding="JSONRPC",
+            )
+        ],
         version="1.0.0",
-        defaultInputModes=["text"],
-        defaultOutputModes=["text"],
+        default_input_modes=["text"],
+        default_output_modes=["text"],
         skills=[skill],
         capabilities=AgentCapabilities(streaming=True),
     )
 
     request_handler = DefaultRequestHandler(
         agent_executor=WebsiteBuilderSimpleAgentExecutor(),
-        task_store=InMemoryTaskStore()
+        task_store=InMemoryTaskStore(),
+        agent_card=agent_card,
     )
 
     # Changed from the old wrapper-based startup so the app can mount the current A2A routes directly.
