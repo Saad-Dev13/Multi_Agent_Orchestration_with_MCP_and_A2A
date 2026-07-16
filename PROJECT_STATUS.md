@@ -24,6 +24,9 @@ Use this file to track what has been done so far and whether the work has been p
 - Updated `utilities/mcp/mcp_connect.py` so the discovered server tools actually load.
 - Confirmed the utilities config matches the expectations of `MCPDiscovery` and `MCPConnector`.
 - Added `google-adk` to the project environment for the utilities-side connector work.
+- Added `uvicorn` to the project dependencies so the website builder agent entrypoint can run.
+- Updated the website builder agent executor and entrypoint to match the current A2A SDK API.
+- Verified that `uv run python -m agents.website_builder_simple --help` works successfully.
 
 ## Next Steps
 - Implement the app frontend shown in the diagram.
@@ -31,6 +34,8 @@ Use this file to track what has been done so far and whether the work has been p
 - Add the agent registry and task delegation flow.
 - Connect remote A2A agents into the orchestration path.
 - Continue testing both MCP servers from Claude Desktop.
+- Continue the website builder tutorial flow with the current SDK if new compatibility issues appear.
+- Continue following the tutorial while extending the utilities-side Google ADK connector.
 
 
 ## GitHub Push Log

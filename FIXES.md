@@ -19,6 +19,10 @@ Use this file to record every fix made in the project.
 - Verify the arithmetic server remains reachable at `http://localhost:3000/mcp/` before connector startup.
 - Implement the frontend, host agent, agent registry, and remote A2A layers that are still planned in the architecture.
 - Continue extending the utilities-side Google ADK connector flow if the tutorial introduces more validation or caching logic.
+- Continue following the website builder agent tutorial with the current A2A SDK if more import or route updates appear.
+
+## Files to be checked from original status
+- Date: 2026-07-16 file_loader.py in utilities/common
 
 ## Completed Fixes
 - Date: 2026-07-16
@@ -63,3 +67,24 @@ Use this file to record every fix made in the project.
 	Why it was needed: Without awaiting the loader, no toolsets would be cached, and one bad server entry could interfere with the rest.
 	How it was fixed: Added a minimal startup load with `asyncio.run(...)`, iterated over `list_servers().items()`, and kept per-server exception handling.
 	Result: The utilities connector now loads the discovered server toolsets while staying close to the tutorial flow.
+- Date: 2026-07-16
+	File: [pyproject.toml](pyproject.toml)
+	Lines: 1-8
+	Problem: The website builder agent entrypoint imported `uvicorn`, but the project manifest did not declare it.
+	Why it was needed: `uv run` needs the dependency in the project environment, otherwise the module fails before the agent starts.
+	How it was fixed: Added `uvicorn` to the project dependencies and synced the environment.
+	Result: The website builder agent entrypoint now imports cleanly under the project environment.
+- Date: 2026-07-16
+	File: [agents/website_builder_simple/agent_executor.py](agents/website_builder_simple/agent_executor.py)
+	Lines: 1-70
+	Problem: The executor used older A2A helper imports and the older task/message creation pattern.
+	Why it was needed: The installed A2A SDK had moved those helpers, so the original imports no longer worked.
+	How it was fixed: Switched to `a2a.helpers.proto_helpers`, used the current `TaskState.TASK_STATE_*` names, and kept the same task update flow.
+	Result: The executor now runs with the current A2A helper API while preserving the tutorial behavior.
+- Date: 2026-07-16
+	File: [agents/website_builder_simple/__main__.py](agents/website_builder_simple/__main__.py)
+	Lines: 1-60
+	Problem: The entrypoint used the removed `A2AStarletteApplication` bootstrap.
+	Why it was needed: The current A2A SDK exposes route helpers mounted on FastAPI instead of the old app wrapper.
+	How it was fixed: Replaced the old wrapper with `FastAPI()` plus `add_a2a_routes_to_fastapi(...)`.
+	Result: The agent module now starts correctly with the current SDK and exposes CLI help under `uv run python -m agents.website_builder_simple`.

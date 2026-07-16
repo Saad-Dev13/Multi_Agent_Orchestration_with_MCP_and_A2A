@@ -51,6 +51,7 @@ Current work includes:
 - A streamable HTTP arithmetic MCP server for remote connector testing
 - The first pieces of the broader A2A orchestration flow
 - A separate `utilities/mcp` config and connector path for local discovery/loading experiments
+- A website builder A2A agent that was updated to match the current A2A SDK layout
 
 ## Current Highlights
 
@@ -59,6 +60,8 @@ Current work includes:
 - Claude Desktop config includes both local and remote connector entries
 - Standalone utilities MCP config is separated from the Claude Desktop config
 - `MCPDiscovery` and `MCPConnector` are wired for the utilities-side config
+- The website builder agent entrypoint now runs with the current A2A route-based FastAPI bootstrap
+- `uvicorn` is declared in the project dependencies so the A2A server entrypoint imports cleanly
 - Desktop workspace issues were fixed for the terminal server
 - Project progress and fixes are tracked in dedicated Markdown files
 
@@ -70,6 +73,7 @@ The current repository covers the first working slices of the system:
 - MCP Connector: Claude Desktop remote connector entry for `mcp-remote`
 - MCP Client flow: server discovery through Claude Desktop config
 - Utilities MCP flow: local config discovery and connector loading for Google ADK
+- A2A agent entrypoint flow for the website builder agent
 
 Planned next layers are:
 
@@ -107,6 +111,8 @@ The arithmetic MCP server exposes an `add_numbers` tool and runs as a streamable
 
 The `utilities/mcp` layer reads the standalone config, discovers both server entries, and prepares tool connections for the Google ADK side of the project.
 
+The website builder agent was updated to use the current A2A SDK imports and FastAPI route mounting so it runs cleanly under `uv run python -m agents.website_builder_simple`.
+
 ## Setup
 
 ### 1. Create the virtual environment
@@ -126,6 +132,8 @@ uv venv
 ```powershell
 uv add "mcp[cli]"
 ```
+
+If you are running the website builder agent, `uvicorn` is also required and is already declared in `pyproject.toml`.
 
 ### 4. Configure Claude Desktop
 
@@ -165,6 +173,7 @@ Planned improvements include:
 - adding more MCP servers and tools
 - connecting remote A2A agents
 - expanding the utilities-side Google ADK connector flow
+- finishing the website builder agent tutorial flow with the current A2A SDK
 - documenting the full end-to-end orchestration flow more clearly
 
 ## Notes
