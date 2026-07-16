@@ -18,6 +18,7 @@ Use this file to record every fix made in the project.
 - Confirm that the arithmetic connector appears in Claude Desktop after restarting with the updated `npx -y mcp-remote` config.
 - Verify the arithmetic server remains reachable at `http://localhost:3000/mcp/` before connector startup.
 - Implement the frontend, host agent, agent registry, and remote A2A layers that are still planned in the architecture.
+- Continue extending the utilities-side Google ADK connector flow if the tutorial introduces more validation or caching logic.
 
 ## Completed Fixes
 - Date: 2026-07-16
@@ -48,3 +49,17 @@ Use this file to record every fix made in the project.
 	Why it was needed: The project status should match the same self-contained architecture description used in the README.
 	How it was fixed: Updated the status file to separate implemented slices from future architecture layers.
 	Result: The project status now reflects the current implementation boundaries and planned next layers.
+- Date: 2026-07-16
+	File: [utilities/mcp/mcp_config.json](utilities/mcp/mcp_config.json)
+	Lines: 1-18
+	Problem: The standalone utilities config still contained Claude Desktop-only fields and a connector command that did not match the utilities-side loader.
+	Why it was needed: The utilities folder needs a clean config format that the local discovery and connector code can read directly.
+	How it was fixed: Removed the Claude Desktop-specific metadata and normalized the arithmetic server entry to the custom `streamable_http` marker used by `MCPConnector`.
+	Result: The standalone config now matches the expectations of the utilities-side discovery and connector path.
+- Date: 2026-07-16
+	File: [utilities/mcp/mcp_connect.py](utilities/mcp/mcp_connect.py)
+	Lines: 1-65
+	Problem: The connector created an async loader but did not await it, and server iteration did not handle each entry independently.
+	Why it was needed: Without awaiting the loader, no toolsets would be cached, and one bad server entry could interfere with the rest.
+	How it was fixed: Added a minimal startup load with `asyncio.run(...)`, iterated over `list_servers().items()`, and kept per-server exception handling.
+	Result: The utilities connector now loads the discovered server toolsets while staying close to the tutorial flow.

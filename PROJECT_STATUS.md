@@ -20,6 +20,10 @@ Use this file to track what has been done so far and whether the work has been p
 - Reframed the documentation around the full A2A/MCP architecture.
 - Added a self-contained Mermaid overview to the README.
 - Documented the intended frontend, host agent/orchestrator, agent registry, and remote A2A layers as future work.
+- Added a standalone utilities-side MCP config at `utilities/mcp/mcp_config.json`.
+- Updated `utilities/mcp/mcp_connect.py` so the discovered server tools actually load.
+- Confirmed the utilities config matches the expectations of `MCPDiscovery` and `MCPConnector`.
+- Added `google-adk` to the project environment for the utilities-side connector work.
 
 ## Next Steps
 - Implement the app frontend shown in the diagram.
@@ -27,6 +31,7 @@ Use this file to track what has been done so far and whether the work has been p
 - Add the agent registry and task delegation flow.
 - Connect remote A2A agents into the orchestration path.
 - Continue testing both MCP servers from Claude Desktop.
+
 
 ## GitHub Push Log
 - Date: 2026-07-16

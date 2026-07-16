@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "terminal_server": {
+      "command": "C:/Users/saad0/.local/bin/uv.exe",
+      "args": [
+        "--directory",
+        "D:/Work/A_Self/AAProjects/Multi_Agent_Orchestration_with_MCP_and_A2A/mcp/servers/terminal_server",
+        "run",
+        "terminal_server.py"
+      ]
+    },
+    "arithmetic_server": {
+      "command": "streamable_http",
+      "args": [
+        "http://localhost:3000/mcp/"
+      ]
+    }
+  }
+}

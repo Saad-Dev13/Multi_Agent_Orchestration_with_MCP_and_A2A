@@ -10,6 +10,7 @@ The system is organized into a few layers:
 - an agent registry that can list agents and delegate tasks
 - remote A2A agents
 - multiple MCP servers with reusable tools
+- a standalone utilities-side MCP connector that can load the same servers for Google ADK experiments
 
 ## Architecture Overview
 
@@ -49,12 +50,15 @@ Current work includes:
 - A terminal MCP server for controlled command execution
 - A streamable HTTP arithmetic MCP server for remote connector testing
 - The first pieces of the broader A2A orchestration flow
+- A separate `utilities/mcp` config and connector path for local discovery/loading experiments
 
 ## Current Highlights
 
 - FastMCP-based terminal server is working locally
 - Streamable HTTP arithmetic server is running on `http://localhost:3000`
 - Claude Desktop config includes both local and remote connector entries
+- Standalone utilities MCP config is separated from the Claude Desktop config
+- `MCPDiscovery` and `MCPConnector` are wired for the utilities-side config
 - Desktop workspace issues were fixed for the terminal server
 - Project progress and fixes are tracked in dedicated Markdown files
 
@@ -65,6 +69,7 @@ The current repository covers the first working slices of the system:
 - MCP Servers: terminal server and arithmetic server
 - MCP Connector: Claude Desktop remote connector entry for `mcp-remote`
 - MCP Client flow: server discovery through Claude Desktop config
+- Utilities MCP flow: local config discovery and connector loading for Google ADK
 
 Planned next layers are:
 
@@ -78,6 +83,9 @@ Planned next layers are:
 
 - `mcp/servers/terminal_server/terminal_server.py` - MCP server for running terminal commands
 - `mcp/servers/streamable_http_server.py` - Streamable HTTP MCP server for arithmetic testing
+- `utilities/mcp/mcp_config.json` - Standalone MCP config for the utilities-side connector
+- `utilities/mcp/mcp_discovery.py` - Reads and validates the standalone MCP config
+- `utilities/mcp/mcp_connect.py` - Loads MCP servers into Google ADK toolsets
 - `FIXES.md` - Detailed log of fixes, file changes, and reasoning
 - `PROJECT_STATUS.md` - Progress tracker and GitHub push history
 - `main.py` - Project entry point or placeholder script
@@ -96,6 +104,8 @@ The terminal MCP server exposes a command tool that:
 This lets Claude Desktop interact with local commands without depending on a fragile working directory.
 
 The arithmetic MCP server exposes an `add_numbers` tool and runs as a streamable HTTP service on `http://localhost:3000` for remote connector testing.
+
+The `utilities/mcp` layer reads the standalone config, discovers both server entries, and prepares tool connections for the Google ADK side of the project.
 
 ## Setup
 
@@ -154,6 +164,7 @@ Planned improvements include:
 - implementing agent registry and delegation flows
 - adding more MCP servers and tools
 - connecting remote A2A agents
+- expanding the utilities-side Google ADK connector flow
 - documenting the full end-to-end orchestration flow more clearly
 
 ## Notes
