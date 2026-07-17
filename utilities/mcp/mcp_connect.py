@@ -5,7 +5,7 @@ from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.mcp_tool import StdioConnectionParams
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPServerParams
 
-from mcp import StdioServerParameters, StdioServerParams 
+from mcp import StdioServerParameters
 
 class MCPConnector:
     """
@@ -20,8 +20,18 @@ class MCPConnector:
     def __init__(self, config_file: str = None):
         self.discovery = MCPDiscovery(config_file)
         self.tools: list[MCPToolset] = []
+        
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
 
-        self.tools = asyncio.run(self._load_all_tools())
+        if loop and loop.is_running():
+            # If the event loop is already running, we defer loading the tools
+            # to the async `get_tools` method to avoid RuntimeError.
+            pass
+        else:
+            self.tools = asyncio.run(self._load_all_tools())
     
     async def _load_all_tools(self):
         """
@@ -69,11 +79,12 @@ class MCPConnector:
         return tools
 
 
-    def get_tools(self) -> list[MCPToolset]:
+    async def get_tools(self) -> list[MCPToolset]:
         """
         Returns the list of cached MCPToolsets.
 
         Returns:
             list[MCPToolset]: The list of cached MCPToolsets.
         """
+        await self._load_all_tools()
         return self.tools.copy()

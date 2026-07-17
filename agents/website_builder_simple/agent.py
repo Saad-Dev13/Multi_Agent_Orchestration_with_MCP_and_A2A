@@ -12,6 +12,9 @@ from google.adk.agents import LlmAgent
 
 from google.genai import types
 
+from dotenv import load_dotenv
+load_dotenv()
+
 class WebsiteBuilderSimple:
     """
     A simple website builder agent that generate basic web pages

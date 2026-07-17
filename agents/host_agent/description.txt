@@ -1,0 +1,1 @@
+An orchestrator agent that intelligently routes incoming user requests to either specialized A2A (Agent-to-Agent) sub-agents or local/remote MCP (Model Context Protocol) tools based on task complexity and system capabilities.

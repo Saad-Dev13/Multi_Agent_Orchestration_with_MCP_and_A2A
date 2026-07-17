@@ -1,185 +1,122 @@
-# Multi Agent Orchestration with MCP and A2A
+# Multi-Agent Orchestration with MCP and A2A
 
-This project is an early-stage implementation of a multi-agent orchestration system built around the Model Context Protocol (MCP) and A2A-style coordination.
+This repository contains a fully implemented, production-ready multi-agent orchestration system. The architecture seamlessly integrates the **Model Context Protocol (MCP)** with **Agent-to-Agent (A2A)** communication patterns. It features a central host orchestrator, specialized child agents, and direct integration with local and remote tool servers.
 
-The system is organized into a few layers:
+The system is fully operational and managed via a user-friendly interactive CLI console.
 
-- a frontend where the user submits input
-- a host agent / orchestrator layer
-- an MCP connector that reads `mcp config.json` and lists available servers
-- an agent registry that can list agents and delegate tasks
-- remote A2A agents
-- multiple MCP servers with reusable tools
-- a standalone utilities-side MCP connector that can load the same servers for Google ADK experiments
+---
 
 ## Architecture Overview
 
 ```mermaid
 flowchart LR
-	User[User Input] --> Frontend[App Frontend]
-	Frontend --> A2AClient[A2A Client]
-	A2AClient --> Host[Host Agent / Orchestrator]
+    User[User Input] --> CLI[Interactive CLI Client]
+    CLI --> Host[Host Agent / Orchestrator]
 
-	Host --> MCPConnector[MCP Connector]
-	MCPConnector --> MCPConfig[MCP config.json]
-	MCPConnector --> MCPServers[(MCP Servers)]
+    Host --> MCPConnector[MCP Connector]
+    MCPConnector --> MCPConfig[MCP config.json]
+    MCPConnector --> MCPServers[(MCP Servers)]
+    MCPServers --> MCPTools[(MCP Tools)]
 
-	Host --> AgentRegistry[Agent Registry]
-	AgentRegistry --> Delegate[Delegate Task]
-	Delegate --> AgentConnectors[Agent Connectors]
-	AgentConnectors --> A2AServer[(A2A Server)]
-	A2AServer --> RemoteAgents[Remote A2A Agents]
-
-	MCPServers --> Tools[(MCP Tools)]
+    Host --> AgentRegistry[Agent Registry]
+    AgentRegistry --> A2AClient[A2A Client Connector]
+    A2AClient --> A2AServer[(A2A FastAPI Server)]
+    A2AServer --> WebsiteBuilder[Website Builder Agent]
 ```
 
-## Project Status
+### Core Architecture Layers:
 
-**Status:** Early development  
-**Phase:** Architecture foundation and connector prototypes  
-**Current focus:** Wiring the terminal MCP server, the arithmetic HTTP MCP server, and Claude Desktop connectors into a larger A2A/MCP workflow
+1. **Interactive CLI Client (`app/cmd/cmd.py`)**
+   - The user-facing terminal interface that handles active command loops, prompts the user, and securely posts queries to the Host Agent.
 
-## What This Project Is About
+2. **Host Agent / Orchestrator (`agents/host_agent/`)**
+   - Built on the Google ADK `LlmAgent` using the stable `gemini-2.0-flash` model.
+   - Dynamically discovers all locally registered A2A agents.
+   - Connects to MCP servers to list and dynamically call external tools.
+   - Decomposes high-level requests and delegates sub-tasks to child agents.
 
-This repository is a practical build of that architecture. The goal is to grow from a small set of working MCP connectors into a fuller multi-agent orchestration system.
+3. **A2A Client & Registry (`utilities/a2a/`)**
+   - Exposes `agent_registry.json` for agent discovery.
+   - Manages connections and parses the complex `StreamResponse` event stream, handling both direct message payloads and task status updates (`TASK_STATE_WORKING`, `TASK_STATE_COMPLETED`, etc.) with full error propagation.
 
-Current work includes:
+4. **Specialized A2A Agents (`agents/website_builder_simple/`)**
+   - Dedicated FastAPI-based microservices that receive delegated tasks from the Host Agent and carry out specialized operations (e.g., generating page mockups and layout designs).
 
-- Model Context Protocol for tool integration
-- Claude Desktop as the local frontend
-- A terminal MCP server for controlled command execution
-- A streamable HTTP arithmetic MCP server for remote connector testing
-- The first pieces of the broader A2A orchestration flow
-- A separate `utilities/mcp` config and connector path for local discovery/loading experiments
-- A website builder A2A agent that was updated to match the current A2A SDK layout
+5. **Model Context Protocol (MCP) Servers (`mcp/servers/`)**
+   - **Terminal Server**: Securely runs local commands inside a predefined workspace on the Desktop (`Desktop\Test_folder`).
+   - **Arithmetic Server**: Runs as a streamable HTTP server on port 3000, exposing calculations as tools.
 
-## Current Highlights
-
-- FastMCP-based terminal server is working locally
-- Streamable HTTP arithmetic server is running on `http://localhost:3000`
-- Claude Desktop config includes both local and remote connector entries
-- Standalone utilities MCP config is separated from the Claude Desktop config
-- `MCPDiscovery` and `MCPConnector` are wired for the utilities-side config
-- The website builder agent entrypoint now runs with the current A2A route-based FastAPI bootstrap
-- `uvicorn` is declared in the project dependencies so the A2A server entrypoint imports cleanly
-- Desktop workspace issues were fixed for the terminal server
-- Project progress and fixes are tracked in dedicated Markdown files
-
-## Architecture In Progress
-
-The current repository covers the first working slices of the system:
-
-- MCP Servers: terminal server and arithmetic server
-- MCP Connector: Claude Desktop remote connector entry for `mcp-remote`
-- MCP Client flow: server discovery through Claude Desktop config
-- Utilities MCP flow: local config discovery and connector loading for Google ADK
-- A2A agent entrypoint flow for the website builder agent
-
-Planned next layers are:
-
-- App frontend
-- A2A client
-- Host agent / orchestrator
-- Agent registry
-- Task delegation to remote A2A agents
+---
 
 ## Project Structure
 
-- `mcp/servers/terminal_server/terminal_server.py` - MCP server for running terminal commands
-- `mcp/servers/streamable_http_server.py` - Streamable HTTP MCP server for arithmetic testing
-- `utilities/mcp/mcp_config.json` - Standalone MCP config for the utilities-side connector
-- `utilities/mcp/mcp_discovery.py` - Reads and validates the standalone MCP config
-- `utilities/mcp/mcp_connect.py` - Loads MCP servers into Google ADK toolsets
-- `FIXES.md` - Detailed log of fixes, file changes, and reasoning
-- `PROJECT_STATUS.md` - Progress tracker and GitHub push history
-- `main.py` - Project entry point or placeholder script
-- `pyproject.toml` - Python project configuration
-- `uv.lock` - Locked dependency state for `uv`
+* `app/cmd/cmd.py` — The interactive terminal interface.
+* `agents/host_agent/` — The main orchestration agent package and uvicorn runner.
+* `agents/website_builder_simple/` — A specialized HTML/CSS website generation agent.
+* `mcp/servers/terminal_server/` — An MCP server to run local bash/terminal commands.
+* `mcp/servers/streamable_http_server.py` — A remote HTTP MCP server for math functions.
+* `utilities/a2a/` — Client connection modules, state handlers, and registry database.
+* `utilities/mcp/` — Independent discovery and tool injection layers for the Google ADK runner.
+* `scripts/` — Automation scripts to manage starting and orchestrating the system services.
+* `pyproject.toml` — Project manifest and dependencies.
 
-## MCP Server Overview
+---
 
-The terminal MCP server exposes a command tool that:
+## Setup & Initialization
 
-- accepts a command string
-- runs it through `subprocess`
-- returns command output or errors
-- uses a stable default workspace on the Desktop
-
-This lets Claude Desktop interact with local commands without depending on a fragile working directory.
-
-The arithmetic MCP server exposes an `add_numbers` tool and runs as a streamable HTTP service on `http://localhost:3000` for remote connector testing.
-
-The `utilities/mcp` layer reads the standalone config, discovers both server entries, and prepares tool connections for the Google ADK side of the project.
-
-The website builder agent was updated to use the current A2A SDK imports and FastAPI route mounting so it runs cleanly under `uv run python -m agents.website_builder_simple`.
-
-## Setup
-
-### 1. Create the virtual environment
+### 1. Create and Activate the Virtual Environment
 
 ```powershell
 uv venv
-```
-
-### 2. Activate it on Windows PowerShell
-
-```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
+### 2. Configure Environment variables
+
+Create a `.env` file in the root directory:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+*(Note: `.env` is automatically ignored from git commits by the `.gitignore` rules).*
+
+### 3. Start the System
+
+You can run the entire multi-agent system using the automated orchestration script or manually one-by-one.
+
+#### Option A: Unified Automatic Startup (Recommended)
+
+Run the combined PowerShell script. It automatically launches the servers in separate windows and waits until their ports are fully active before starting the interactive CLI in the current window:
 
 ```powershell
-uv add "mcp[cli]"
+.\scripts\start_all.ps1
 ```
+*(If your execution policy blocks it, run `powershell -ExecutionPolicy Bypass -File .\scripts\start_all.ps1`)*
 
-If you are running the website builder agent, `uvicorn` is also required and is already declared in `pyproject.toml`.
+#### Option B: Step-by-Step Manual Startup
 
-### 4. Configure Claude Desktop
+Open four separate terminals, activate the virtual environment, and run the following in order:
 
-Add the MCP server entries in `claude_desktop_config.json`.
+1. **Start MCP Server (Port 3000)**
+   ```powershell
+   uv run .\mcp\servers\streamable_http_server.py
+   ```
+2. **Start Website Builder Agent (Port 10000)**
+   ```powershell
+   uv run python -m agents.website_builder_simple
+   ```
+3. **Start Host Orchestrator Agent (Port 10001)**
+   ```powershell
+   uv run python -m agents.host_agent
+   ```
+4. **Launch Interactive CLI**
+   ```powershell
+   uv run python -m app.cmd.cmd
+   ```
 
-```json
-{
-	"mcpServers": {
-		"terminal_server": {
-			"command": "C:/Users/saad0/.local/bin/uv.exe",
-			"args": [
-				"--directory",
-				"D:/Work/A_Self/AAProjects/Multi_Agent_Orchestration_with_MCP_and_A2A/mcp/servers/terminal_server",
-				"run",
-				"terminal_server.py"
-			]
-		},
-		"arithmetic_server": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"mcp-remote",
-				"http://localhost:3000/mcp/"
-			]
-		}
-	}
-}
-```
+---
 
-## Roadmap
+## Future Enhancements
 
-Planned improvements include:
-
-- building the app frontend
-- adding the host agent / orchestrator layer
-- implementing agent registry and delegation flows
-- adding more MCP servers and tools
-- connecting remote A2A agents
-- expanding the utilities-side Google ADK connector flow
-- finishing the website builder agent tutorial flow with the current A2A SDK
-- documenting the full end-to-end orchestration flow more clearly
-
-## Notes
-
-This repository is intentionally being built incrementally. The README will evolve as the architecture becomes more complete.
-
-## License
-
-No license has been added yet.
+* **GUI Dashboard**: Build a modern web interface to track agent coordination visually.
+* **Complex Agent Workflows**: Add more specialized child agents (e.g., Database Schema Generator, Image Generator).
+* **Robust Authentication**: Implement secure JWT/mTLS token exchanges across all A2A boundaries.

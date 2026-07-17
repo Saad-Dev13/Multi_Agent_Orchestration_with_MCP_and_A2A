@@ -1,46 +1,35 @@
 # Project Status
 
-Use this file to track what has been done so far and whether the work has been pushed to GitHub.
+Use this file to track implementation progress and configuration updates for this multi-agent orchestration project.
 
 ## Current Status
-- Last updated: 2026-07-16
-- Current branch: master
-- Working tree status: Uncommitted documentation updates present
-- Pushed to GitHub: Yes
+- **Last updated:** 2026-07-17
+- **Current branch:** main
+- **Pushed to GitHub:** Ready to commit and push all recent additions
+
+---
 
 ## What Has Been Done
-- Fixed the MCP server tool decorator in `mcp/servers/terminal_server/terminal_server.py`.
-- Created a valid default workspace path for the terminal server and switched it to `Desktop\Test_folder`.
-- Confirmed the Claude Desktop MCP config is pointing at `uv.exe` and the server folder.
-- Created project-level tracking files for fixes and status.
-- Added a streamable HTTP arithmetic MCP server in `mcp/servers/streamable_http_server.py`.
-- Added a Claude Desktop remote connector entry for `arithmetic_server`.
-- Verified the arithmetic server starts on `http://localhost:3000`.
-- Updated the README to reflect the early-stage project showcase and two-server setup.
-- Reframed the documentation around the full A2A/MCP architecture.
-- Added a self-contained Mermaid overview to the README.
-- Documented the intended frontend, host agent/orchestrator, agent registry, and remote A2A layers as future work.
-- Added a standalone utilities-side MCP config at `utilities/mcp/mcp_config.json`.
-- Updated `utilities/mcp/mcp_connect.py` so the discovered server tools actually load.
-- Confirmed the utilities config matches the expectations of `MCPDiscovery` and `MCPConnector`.
-- Added `google-adk` to the project environment for the utilities-side connector work.
-- Added `uvicorn` to the project dependencies so the website builder agent entrypoint can run.
-- Updated the website builder agent executor and entrypoint to match the current A2A SDK API.
-- Verified that `uv run python -m agents.website_builder_simple --help` works successfully.
 
-## Next Steps
-- Implement the app frontend shown in the diagram.
-- Add the host agent / orchestrator layer.
-- Add the agent registry and task delegation flow.
-- Connect remote A2A agents into the orchestration path.
-- Continue testing both MCP servers from Claude Desktop.
-- Continue the website builder tutorial flow with the current SDK if new compatibility issues appear.
-- Continue following the tutorial while extending the utilities-side Google ADK connector.
+### 1. Model Context Protocol (MCP) Servers
+- **Terminal MCP Server**: Exposes a safe command execution tool working out of `Desktop\Test_folder` to handle terminal executions securely.
+- **Arithmetic MCP Server**: Exposes calculation tools as a streamable HTTP server on port 3000.
+- **MCP Connector (`utilities/mcp/mcp_connect.py`)**: Wired to read `mcp_config.json`, resolve async startup tool-loading loops under Uvicorn, and dynamically register MCP toolsets to the Google ADK runner.
 
+### 2. A2A Orchestrator & Child Agents
+- **Website Builder Agent (`agents/website_builder_simple/`)**: Upgraded to support FastAPI-based route configurations under the current A2A SDK and Google ADK standards.
+- **Host Agent / Orchestrator (`agents/host_agent/`)**: Formulated using the Google ADK `LlmAgent` and `gemini-2.0-flash` model. Leverages registry search to discover child agents and dynamically calls both local and remote MCP tools.
+- **Client Connection Layer (`utilities/a2a/agent_connect.py`)**: Awaits client instantiation, processes streaming messages, parses `status_update` payloads, and propagates detailed execution or quota errors.
 
-## GitHub Push Log
-- Date: 2026-07-16
-- Commit: Initial commit
-- Branch: master
-- Pushed: Yes
-- Notes: Initial repository push completed successfully before the documentation refresh.
+### 3. Interactive CLI Client
+- **CMD Application (`app/cmd/cmd.py`)**: Created an interactive click-based loop interface allowing immediate query dispatching to the host orchestrator and displaying real-time task status updates.
+
+### 4. Orchestration Automation
+- **Start Scripts (`scripts/`)**: Created individual PowerShell run scripts for all parts, plus a master orchestration script `start_all.ps1` that uses TCP port testing to wait for each dependency service to start before starting the interactive terminal.
+
+---
+
+## Future Enhancements
+- **Multi-Agent Tasks**: Wire additional specialized agents to delegate complex, multi-stage software and document layout problems.
+- **Web UI Console**: Implement a visually rich React/Next.js dashboard to inspect the task graph and A2A messages in real-time.
+- **Agent Memory**: Incorporate persistent vector memory across sessions so agents retain history.

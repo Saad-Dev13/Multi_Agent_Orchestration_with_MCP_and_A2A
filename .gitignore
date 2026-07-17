@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environments and credentials
+.env
+.env.*
+*.local
+credentials.json
+client_secrets.json

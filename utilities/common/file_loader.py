@@ -16,7 +16,7 @@ def load_instructions_file(filename: str, default: str = "") -> str:
     """
     # If the path isn't absolute, anchor it to the folder where this script lives
     if not os.path.isabs(filename):
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         file_path = os.path.join(base_dir, filename)
     else:
         file_path = filename

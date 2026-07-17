@@ -1,107 +1,110 @@
 # Fixes Log
 
-Use this file to record every fix made in the project.
+This log documents all issues identified and resolved during the development of the Multi-Agent Orchestration system.
 
-## Entry Template
-- Date:
-- File:
-- Lines:
-- Problem:
-- Why it was needed:
-- How it was fixed:
-- Result:
+---
 
-## Remaining Fixes
-- Restart Claude Desktop and verify the MCP server reconnects successfully.
-- Test the `run_command` tool from Claude with a simple command such as `echo hello`.
-- Confirm whether the server should keep using `Desktop\Test_folder` or switch to a different workspace folder later.
-- Confirm that the arithmetic connector appears in Claude Desktop after restarting with the updated `npx -y mcp-remote` config.
-- Verify the arithmetic server remains reachable at `http://localhost:3000/mcp/` before connector startup.
-- Implement the frontend, host agent, agent registry, and remote A2A layers that are still planned in the architecture.
-- Continue extending the utilities-side Google ADK connector flow if the tutorial introduces more validation or caching logic.
-- Continue following the website builder agent tutorial with the current A2A SDK if more import or route updates appear.
+## Remaining Maintenance & Verification
+- **Testing**: Run regular checks on external MCP connections.
+- **Rate-Limiting**: Monitor Gemini API quota usage and implement client-side retries if free tier limits are hit.
 
-## Files to be checked from original status
-- Date: 2026-07-16 file_loader.py in utilities/common
+---
 
 ## Completed Fixes
-- Date: 2026-07-16
-	File: [mcp/servers/terminal_server/terminal_server.py](mcp/servers/terminal_server/terminal_server.py)
-	Lines: 6-19
-	Problem: The MCP tool file included a stray `mcp.tool("terminal_server")` line and the default working directory pointed to a non-existent folder, which caused WinError 267 in Claude Desktop.
-	Why it was needed: The server could not reliably start command execution without a valid working directory, and the extra line was not a valid tool registration pattern.
-	How it was fixed: Removed the stray line, kept `@mcp.tool()` as the tool decorator, created the default workspace automatically, and changed the default workspace to a `Test_folder` on the Desktop.
-	Result: The MCP server file now validates cleanly and should have a stable working directory when started.
-- Date: 2026-07-16
-	File: [mcp/servers/streamable_http_server.py](mcp/servers/streamable_http_server.py)
-	Lines: 1-35
-	Problem: The arithmetic MCP service needed to be confirmed as a valid streamable HTTP server for Claude Desktop remote connector testing.
-	Why it was needed: Claude Desktop can only show the connector if the server starts successfully and exposes a reachable HTTP endpoint.
-	How it was fixed: Defined the arithmetic server with `FastMCP(..., host="localhost", port=3000, stateless_http=True)` and launched it with `mcp.run(transport="streamable-http")`.
-	Result: The arithmetic server starts successfully on `http://localhost:3000` and is ready for MCP remote connection.
-- Date: 2026-07-16
-	File: [README.md](README.md)
-	Lines: 1-220
-	Problem: The README still referenced the diagram indirectly and depended on the image to explain the intended architecture.
-	Why it was needed: The documentation needed to stand on its own so readers could understand the project without seeing the diagram.
-	How it was fixed: Rewrote the README around the layered A2A/MCP architecture and added a self-contained Mermaid flowchart.
-	Result: The README now explains the system independently of the image and matches the current project direction.
-- Date: 2026-07-16
-	File: [PROJECT_STATUS.md](PROJECT_STATUS.md)
-	Lines: 1-220
-	Problem: The status file still described the work in a diagram-dependent way.
-	Why it was needed: The project status should match the same self-contained architecture description used in the README.
-	How it was fixed: Updated the status file to separate implemented slices from future architecture layers.
-	Result: The project status now reflects the current implementation boundaries and planned next layers.
-- Date: 2026-07-16
-	File: [utilities/mcp/mcp_config.json](utilities/mcp/mcp_config.json)
-	Lines: 1-18
-	Problem: The standalone utilities config still contained Claude Desktop-only fields and a connector command that did not match the utilities-side loader.
-	Why it was needed: The utilities folder needs a clean config format that the local discovery and connector code can read directly.
-	How it was fixed: Removed the Claude Desktop-specific metadata and normalized the arithmetic server entry to the custom `streamable_http` marker used by `MCPConnector`.
-	Result: The standalone config now matches the expectations of the utilities-side discovery and connector path.
-- Date: 2026-07-16
-	File: [utilities/mcp/mcp_connect.py](utilities/mcp/mcp_connect.py)
-	Lines: 1-65
-	Problem: The connector created an async loader but did not await it, and server iteration did not handle each entry independently.
-	Why it was needed: Without awaiting the loader, no toolsets would be cached, and one bad server entry could interfere with the rest.
-	How it was fixed: Added a minimal startup load with `asyncio.run(...)`, iterated over `list_servers().items()`, and kept per-server exception handling.
-	Result: The utilities connector now loads the discovered server toolsets while staying close to the tutorial flow.
-- Date: 2026-07-16
-	File: [pyproject.toml](pyproject.toml)
-	Lines: 1-8
-	Problem: The website builder agent entrypoint imported `uvicorn`, but the project manifest did not declare it.
-	Why it was needed: `uv run` needs the dependency in the project environment, otherwise the module fails before the agent starts.
-	How it was fixed: Added `uvicorn` to the project dependencies and synced the environment.
-	Result: The website builder agent entrypoint now imports cleanly under the project environment.
-- Date: 2026-07-16
-	File: [agents/website_builder_simple/agent_executor.py](agents/website_builder_simple/agent_executor.py)
-	Lines: 1-70
-	Problem: The executor used older A2A helper imports and the older task/message creation pattern.
-	Why it was needed: The installed A2A SDK had moved those helpers, so the original imports no longer worked.
-	How it was fixed: Switched to `a2a.helpers.proto_helpers`, used the current `TaskState.TASK_STATE_*` names, and kept the same task update flow.
-	Result: The executor now runs with the current A2A helper API while preserving the tutorial behavior.
-- Date: 2026-07-16
-	File: [agents/website_builder_simple/__main__.py](agents/website_builder_simple/__main__.py)
-	Lines: 1-60
-	Problem: The entrypoint used the removed `A2AStarletteApplication` bootstrap.
-	Why it was needed: The current A2A SDK exposes route helpers mounted on FastAPI instead of the old app wrapper.
-	How it was fixed: Replaced the old wrapper with `FastAPI()` plus `add_a2a_routes_to_fastapi(...)`.
-	Result: The agent module now starts correctly with the current SDK and exposes CLI help under `uv run python -m agents.website_builder_simple`.
-- Date: 2026-07-16
-	File: [agents/website_builder_simple/__main__.py](agents/website_builder_simple/__main__.py), [agents/website_builder_simple/agent.py](agents/website_builder_simple/agent.py)
-	Lines: multiple
-	Problem: Running the agent module failed due to multiple API changes in the newer version of the `a2a-sdk` and `google-adk` libraries. First, `ValueError: Protocol message AgentCard has no "url" field.` (and camelCase fields for modes failed). Second, `pydantic_core._pydantic_core.ValidationError: 1 validation error for LlmAgent instructions Extra inputs are not permitted`. Third, `TypeError: DefaultRequestHandlerV2.__init__() missing 1 required positional argument: 'agent_card'`.
-	Why it was needed: The agent codebase was outdated compared to the active versions of both SDKs, preventing the FastAPI server from instantiating or starting.
-	How it was fixed:
-		1. Imported `AgentInterface` and updated the `AgentCard` instantiation to declare the URL under `supported_interfaces` (using `JSONRPC` protocol binding). Also updated `defaultInputModes` and `defaultOutputModes` constructor arguments to their snake_case equivalents (`default_input_modes` and `default_output_modes`).
-		2. Updated `LlmAgent` construction in `agent.py` to use `instruction=self.system_instruction` instead of `instructions=`.
-		3. Added `agent_card=agent_card` parameter to `DefaultRequestHandler` call in `__main__.py`.
-	Result: The agent server starts successfully on `http://localhost:10000` with the updated A2A and ADK library APIs.
-- Date: 2026-07-16
-	File: [agents/website_builder_simple/agent.py](agents/website_builder_simple/agent.py)
-	Lines: 75
-	Problem: The google-genai SDK's `types.Part.from_text` method requires the `text` argument to be passed by keyword name (keyword-only parameter), but it was passed positionally, causing `Expected argument text to be passed by name`.
-	Why it was needed: Running the agent to process queries failed immediately with a TypeError/ValueError due to the positional argument call pattern.
-	How it was fixed: Modified the invocation at line 75 to pass `text=query` instead of `query`.
-	Result: The agent correctly runs queries and uses the Google GenAI SDK to generate content.
+
+### 1. Model Name and Quota Resolution
+- **Date**: 2026-07-16
+- **File**: [agents/host_agent/agent.py](agents/host_agent/agent.py)
+- **Problem**: Running the agent resulted in `404 NOT_FOUND` for the `gemini-2.5-flash` and `gemini-3.5-flash` models.
+- **Why it was needed**: Those model identifiers are deprecated or invalid. The current stable model is `gemini-2.0-flash`.
+- **How it was fixed**: Changed the model definition to `gemini-2.0-flash`.
+- **Result**: Host Agent queries execute correctly.
+
+- **Date**: 2026-07-16
+- **File**: [agents/host_agent/agent.py](agents/host_agent/agent.py)
+- **Problem**: When hitting a `429 RESOURCE_EXHAUSTED` rate limit, the final agent response returned as an empty string.
+- **Why it was needed**: The client yielded empty strings on failed ADK execution instead of surfacing the error details.
+- **How it was fixed**: Updated `invoke()` to extract `error_code` and `error_message` from the final response event and surface it.
+- **Result**: Rate limit and API quota errors are gracefully printed in the terminal.
+
+---
+
+### 2. A2A Communication and SDK Updates
+- **Date**: 2026-07-16
+- **File**: [utilities/a2a/agent_connect.py](utilities/a2a/agent_connect.py)
+- **Problem**: Calling `send_message` returned `object async_generator can't be used in 'await' expression`.
+- **Why it was needed**: `send_message` is an async generator (utilizing `yield`). Calling it returns an `async_generator` object synchronously, so it should not be awaited directly.
+- **How it was fixed**: Removed the `await` keyword from `a2a_client.send_message(...)` and consumed the stream using `async for`.
+- **Result**: Streaming responses parse correctly.
+
+- **Date**: 2026-07-16
+- **File**: [utilities/a2a/agent_connect.py](utilities/a2a/agent_connect.py)
+- **Problem**: Missing await on client instantiation returned a coroutine.
+- **Why it was needed**: `create_client` is defined with `async def` and must be awaited to resolve to the client instance.
+- **How it was fixed**: Added `await` to `create_client(...)`.
+- **Result**: Connection establishes successfully.
+
+- **Date**: 2026-07-16
+- **File**: [utilities/a2a/agent_connect.py](utilities/a2a/agent_connect.py)
+- **Problem**: Client returned "No response from agent" on all requests.
+- **Why it was needed**: The updated SDK sends completion content wrapped inside a `status_update` event payload rather than direct `message` fields.
+- **How it was fixed**: Added parsing for `status_update` event states and extracted completed text content.
+- **Result**: Stream content resolves and displays successfully.
+
+---
+
+### 3. Service Lifecycle and Startup Automation
+- **Date**: 2026-07-17
+- **File**: [scripts/start_all.ps1](scripts/start_all.ps1)
+- **Problem**: Running multiple agents, MCP servers, and terminal clients required manual startup of 4 separate windows.
+- **Why it was needed**: A unified startup was required to prevent race conditions (e.g. CLI client starting before servers are fully bound to ports).
+- **How it was fixed**: Created a master PowerShell script `start_all.ps1` that starts each service in a new window and uses TCP socket polling to wait until the port is open before launching the next.
+- **Result**: Clean, automated system startup.
+
+- **Date**: 2026-07-16
+- **File**: [agents/host_agent/__main__.py](agents/host_agent/__main__.py)
+- **Problem**: Host agent exited immediately right after launching the FastAPI/Uvicorn server.
+- **Why it was needed**: `asyncclick` was wrapping the main function with `anyio.run` but Uvicorn was starting its own event loop, causing immediate socket cancellations.
+- **How it was fixed**: Switched to synchronous `click` and wrapped the server startup in `asyncio.run(serve())` within the callback.
+- **Result**: Host agent server runs stably on port 10001.
+
+- **Date**: 2026-07-16
+- **File**: [app/cmd/cmd.py](app/cmd/cmd.py)
+- **Problem**: CLI client failed with `ModuleNotFoundError: No module named 'asyncclick'` and loop conflict warnings.
+- **Why it was needed**: Legacy command line wrapper loop conflicts.
+- **How it was fixed**: Replaced `asyncclick` with standard `click` and executed the main loop inside a synchronous callback using `asyncio.run()`.
+- **Result**: CLI starts cleanly and prompts for user commands.
+
+---
+
+### 4. Codebase Typos and Pathing
+- **Date**: 2026-07-16
+- **File**: [utilities/common/file_loader.py](utilities/common/file_loader.py)
+- **Problem**: Host agent couldn't locate `instructions.txt` or `description.txt`.
+- **Why it was needed**: File loader resolved paths relative to its own subdirectory instead of the project root.
+- **How it was fixed**: Configured the loader base path to search relative to the repository root.
+- **Result**: Text assets resolve and load cleanly.
+
+- **Date**: 2026-07-16
+- **File**: [agents/host_agent/agent_executor.py](agents/host_agent/agent_executor.py)
+- **Problem**: `ImportError` on `HostAgentExecutor`.
+- **Why it was needed**: Copy-paste class name typo in `agent_executor.py`.
+- **How it was fixed**: Renamed class definition to `HostAgentExecutor`.
+- **Result**: Module runs correctly.
+
+- **Date**: 2026-07-16
+- **File**: [utilities/a2a/agent_registry.json](utilities/a2a/agent_registry.json)
+- **Problem**: Host agent registry not found error.
+- **Why it was needed**: The file was saved as `agent_registry.josn`.
+- **How it was fixed**: Renamed file extension to `.json`.
+- **Result**: Registry loads on startup.
+
+---
+
+### 5. Git Security
+- **Date**: 2026-07-17
+- **File**: [.gitignore](.gitignore)
+- **Problem**: Sensitive API keys and keys in `.env` could be pushed to GitHub accidentally.
+- **Why it was needed**: The `.gitignore` file did not contain rule declarations for `.env` files.
+- **How it was fixed**: Appended `.env`, `*.local`, and standard secret file patterns to `.gitignore`.
+- **Result**: Credentials and local variables are excluded from git.
